@@ -145,10 +145,10 @@ export const FoodCard = forwardRef<FoodCardHandle, FoodCardProps>(function FoodC
     const movement = Math.min(Math.abs(translateX.value) + Math.abs(translateY.value), SWIPE_THRESHOLD);
     const progress = movement / SWIPE_THRESHOLD;
     return {
-      opacity: 0.82 + 0 * progress,
+      opacity: interpolate(progress, [0, 0.05, 1], [0.72, 0.86, 1]),
       transform: [
-        { translateY: 14 + 0 * movement },
-        { scale: 0.95 },
+        { translateY: interpolate(progress, [0, 1], [18, 0]) },
+        { scale: interpolate(progress, [0, 1], [0.94, 1]) },
       ],
     };
   });
@@ -232,26 +232,26 @@ function FoodCardFace({ food, children }: { food: Food; children?: React.ReactNo
 }
 
 const styles = StyleSheet.create({
-  deck: { width: '100%', maxWidth: 396, flex: 1 },
+  deck: { width: '100%', maxWidth: 402, flex: 1 },
   cardWrap: { ...StyleSheet.absoluteFillObject },
   nextCard: { zIndex: 0 },
-  card: { flex: 1, borderRadius: 36 },
+  card: { flex: 1, borderRadius: 40 },
   image: { ...StyleSheet.absoluteFillObject },
   scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.36)' },
-  copy: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', padding: 24, paddingBottom: 38, gap: 8 },
-  emoji: { fontSize: 48 },
-  title: { color: colors.text, fontSize: 28, fontWeight: '700', textAlign: 'center' },
-  subtitle: { color: colors.textSoft, fontSize: 16, textAlign: 'center' },
-  tags: { flexDirection: 'row', gap: 6, paddingTop: 4 },
-  tag: { borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, backgroundColor: 'rgba(0, 0, 0, 0.42)' },
-  tagText: { color: colors.textSoft, fontSize: 10, textTransform: 'capitalize' },
+  copy: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', padding: 28, paddingBottom: 42, gap: 10 },
+  emoji: { fontSize: 52 },
+  title: { color: colors.text, fontSize: 30, fontWeight: '700', textAlign: 'center' },
+  subtitle: { color: colors.textSoft, fontSize: 17, textAlign: 'center' },
+  tags: { flexDirection: 'row', gap: 7, paddingTop: 4 },
+  tag: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: 'rgba(0, 0, 0, 0.42)' },
+  tagText: { color: colors.textSoft, fontSize: 11, textTransform: 'capitalize' },
   badge: {
     position: 'absolute',
-    top: 32,
+    top: 38,
     zIndex: 3,
     borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
     backgroundColor: 'rgba(0, 0, 0, 0.48)',
   },
   likeBadge: { right: 25, transform: [{ rotate: '10deg' }], backgroundColor: 'rgba(75, 216, 131, 0.92)' },

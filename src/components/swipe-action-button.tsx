@@ -42,11 +42,11 @@ export function SwipeActionButton({
 }
 
 const styles = StyleSheet.create({
-  pressable: { width: 74, alignItems: 'center', gap: 8 },
-  compact: { paddingTop: 18 },
+  pressable: { width: 78, alignItems: 'center', gap: 10 },
+  compact: { paddingTop: 22 },
   circle: { borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   labelWrap: { width: 82 },
   label: { color: colors.textDim, fontSize: 11, fontWeight: '600', textAlign: 'center' },
-  pressed: { opacity: 0.8 },
+  pressed: { transform: [{ scale: 0.94 }], opacity: 0.8 },
   disabled: { opacity: 0.35 },
 });

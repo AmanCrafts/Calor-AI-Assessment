@@ -49,6 +49,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pressed: { opacity: 0.82 },
+  pressed: { transform: [{ scale: 0.94 }], opacity: 0.82 },
   disabled: { opacity: 0.35 },
 });

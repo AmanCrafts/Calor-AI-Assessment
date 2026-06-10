@@ -5,13 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { GlassContainer } from 'expo-glass-effect';
 import { Href, usePathname, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import {
-  LayoutChangeEvent,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   clamp,
@@ -22,188 +16,131 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const NAV_ITEMS: { label: string; icon: keyof typeof Ionicons.glyphMap; href: Href }[] = [
+const tabs: { label: string; icon: keyof typeof Ionicons.glyphMap; href: Href }[] = [
   { label: 'Start', icon: 'home-outline', href: '/' },
   { label: 'FAQ', icon: 'help-circle-outline', href: '/faq' },
   { label: 'Taste Profile', icon: 'restaurant-outline', href: '/results' },
 ];
 
-const springConfig = {
-  damping: 24,
-  stiffness: 180,
-  mass: 1.0,
+const spring = {
+  damping: 19,
+  stiffness: 210,
+  mass: 0.75,
 };
 
-const GLASS_TINT = 'rgba(220, 220, 220, 0.1)';
+const navigationGlassTint = 'rgba(204, 204, 204, 0.11)';
 
 export function BottomNavigation() {
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-
-  const selectedTab = NAV_ITEMS.findIndex((item) => pathname === item.href);
-  const currentTab = selectedTab === -1 ? 0 : selectedTab;
-
-  const itemWidth = useSharedValue(0);
-  const indicatorLeft = useSharedValue(0);
-  const gestureStartLeft = useSharedValue(0);
-  const indicatorScale = useSharedValue(1);
-  const lastPreviewedIndex = useSharedValue(currentTab);
-  const searchButtonScale = useSharedValue(pathname === '/search' ? 1.05 : 1);
+  const activeIndex = tabs.findIndex((tab) => pathname === tab.href);
+  const tabWidth = useSharedValue(0);
+  const selectionX = useSharedValue(0);
+  const dragStartX = useSharedValue(0);
+  const dragScale = useSharedValue(1);
+  const dragIndex = useSharedValue(Math.max(activeIndex, 0));
+  const searchScale = useSharedValue(pathname === '/search' ? 1.06 : 1);
 
   useEffect(() => {
-    if (selectedTab !== -1) {
-      indicatorLeft.value = withSpring(selectedTab * itemWidth.value, springConfig);
-      lastPreviewedIndex.value = selectedTab;
+    if (activeIndex >= 0) {
+      selectionX.value = withSpring(activeIndex * tabWidth.value, spring);
+      dragIndex.value = activeIndex;
     }
+    searchScale.value = withSpring(pathname === '/search' ? 1.06 : 1, spring);
+  }, [activeIndex, dragIndex, pathname, searchScale, selectionX, tabWidth]);
 
-    searchButtonScale.value = withSpring(
-      pathname === '/search' ? 1.05 : 1,
-      springConfig,
-    );
-  }, [
-    selectedTab,
-    pathname,
-    indicatorLeft,
-    itemWidth,
-    lastPreviewedIndex,
-    searchButtonScale,
-  ]);
-
-  const handleTabsLayout = (event: LayoutChangeEvent) => {
-    const nextWidth = event.nativeEvent.layout.width / NAV_ITEMS.length;
-
-    itemWidth.value = nextWidth;
-    indicatorLeft.value = selectedTab >= 0 ? selectedTab * nextWidth : 0;
+  const onTabsLayout = (event: LayoutChangeEvent) => {
+    const width = event.nativeEvent.layout.width / tabs.length;
+    tabWidth.value = width;
+    selectionX.value = activeIndex >= 0 ? activeIndex * width : 0;
   };
 
-  const goToRoute = (href: Href, shouldHaptic = true) => {
-    if (shouldHaptic) {
+  const navigate = (href: Href, haptic = true) => {
+    if (haptic) {
       void Haptics.selectionAsync();
     }
-
     router.replace(href);
   };
 
-  const notifyTabPreview = () => {
+  const previewTab = () => {
     void Haptics.selectionAsync();
   };
 
-  const commitTabChange = (index: number) => {
-    goToRoute(NAV_ITEMS[index].href, false);
+  const dropOnTab = (index: number) => {
+    navigate(tabs[index].href, false);
   };
 
-  const indicatorStyle = useAnimatedStyle(() => ({
-    width: itemWidth.value,
-    transform: [
-      { translateX: indicatorLeft.value },
-      { scale: 1 + 0 * indicatorScale.value },
-    ],
+  const selectionStyle = useAnimatedStyle(() => ({
+    width: tabWidth.value,
+    transform: [{ translateX: selectionX.value }, { scale: dragScale.value }],
   }));
 
-  const floatingSearchStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: searchButtonScale.value }],
+  const searchStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: searchScale.value }],
   }));
 
-  const tabPanGesture = Gesture.Pan()
+  const dragGesture = Gesture.Pan()
     .minDistance(1)
     .onBegin(() => {
-      gestureStartLeft.value = indicatorLeft.value;
-      indicatorScale.value = withSpring(1.07, springConfig);
+      dragStartX.value = selectionX.value;
+      dragScale.value = withSpring(1.08, spring);
     })
     .onUpdate((event) => {
-      const rightLimit = itemWidth.value * (NAV_ITEMS.length - 1);
+      const maxX = tabWidth.value * (tabs.length - 1);
+      selectionX.value = clamp(dragStartX.value + event.translationX, 0, maxX);
 
-      indicatorLeft.value = clamp(
-        gestureStartLeft.value + event.translationX,
-        0,
-        rightLimit,
-      );
-
-      const hoveredIndex = itemWidth.value
-        ? Math.round(indicatorLeft.value / itemWidth.value)
-        : 0;
-
-      if (hoveredIndex !== lastPreviewedIndex.value) {
-        lastPreviewedIndex.value = hoveredIndex;
-        runOnJS(notifyTabPreview)();
+      const nextIndex = tabWidth.value ? Math.round(selectionX.value / tabWidth.value) : 0;
+      if (nextIndex !== dragIndex.value) {
+        dragIndex.value = nextIndex;
+        runOnJS(previewTab)();
       }
     })
     .onEnd((event) => {
-      const finalIndex = itemWidth.value
-        ? clamp(
-            Math.round(
-              (indicatorLeft.value + event.velocityX * 0.075) /
-                itemWidth.value,
-            ),
-            0,
-            NAV_ITEMS.length - 1,
-          )
-        : 0;
-
-      indicatorLeft.value = withSpring(finalIndex * itemWidth.value, springConfig);
-      indicatorScale.value = withSpring(1, springConfig);
-
-      runOnJS(commitTabChange)(finalIndex);
+      const maxIndex = tabs.length - 1;
+      const projectedX = selectionX.value + event.velocityX * 0.08;
+      const nextIndex = tabWidth.value ? clamp(Math.round(projectedX / tabWidth.value), 0, maxIndex) : 0;
+      selectionX.value = withSpring(nextIndex * tabWidth.value, spring);
+      dragScale.value = withSpring(1, spring);
+      runOnJS(dropOnTab)(nextIndex);
     })
     .onFinalize(() => {
-      indicatorScale.value = withSpring(1, springConfig);
+      dragScale.value = withSpring(1, spring);
     });
 
   return (
-    <View
-      pointerEvents="box-none"
-      style={[
-        styles.floatingWrapper,
-        { paddingBottom: Math.max(insets.bottom, 14) },
-      ]}
-    >
-      <GlassContainer spacing={16} style={styles.dock}>
-        <GestureDetector gesture={tabPanGesture}>
-          <View style={styles.tabRail}>
+    <View pointerEvents="box-none" style={[styles.wrapper, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+      <GlassContainer spacing={18} style={styles.row}>
+        <GestureDetector gesture={dragGesture}>
+          <View style={styles.bar}>
             <GlassPanel
-              intensity={84}
-              tintColor={GLASS_TINT}
+              intensity={86}
+              tintColor={navigationGlassTint}
               variant="pill"
-              style={[StyleSheet.absoluteFill, styles.railGlass]}
+              style={[StyleSheet.absoluteFill, styles.navigationGlass]}
             />
 
-            <Animated.View
-              pointerEvents="none"
-              style={[styles.activeIndicator, indicatorStyle]}
-            >
+            <Animated.View pointerEvents="none" style={[styles.selection, selectionStyle]}>
               <GlassPanel
                 glassStyle="clear"
-                intensity={98}
+                intensity={100}
                 variant="pill"
-                style={styles.indicatorGlass}
+                style={styles.selectionGlass}
               />
             </Animated.View>
 
-            <View onLayout={handleTabsLayout} style={styles.tabList}>
-              {NAV_ITEMS.map((item, index) => {
-                const isActive = selectedTab === index;
-
+            <View onLayout={onTabsLayout} style={styles.tabs}>
+              {tabs.map((tab, index) => {
+                const active = activeIndex === index;
                 return (
                   <Pressable
-                    key={item.label}
                     accessibilityRole="tab"
-                    accessibilityState={{ selected: isActive }}
-                    onPress={() => goToRoute(item.href)}
-                    style={({ pressed }) => [
-                      styles.navItem,
-                      pressed && styles.navItemPressed,
-                    ]}
-                  >
-                    <Ionicons
-                      name={item.icon}
-                      size={20}
-                      color={isActive ? colors.green : colors.textSoft}
-                    />
-
-                    <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
-                      {item.label}
-                    </Text>
+                    accessibilityState={{ selected: active }}
+                    key={tab.label}
+                    onPress={() => navigate(tab.href)}
+                    style={({ pressed }) => [styles.tab, pressed && styles.pressed]}>
+                    <Ionicons color={active ? colors.green : colors.textSoft} name={tab.icon} size={20} />
+                    <Text style={[styles.label, active && styles.activeLabel]}>{tab.label}</Text>
                   </Pressable>
                 );
               })}
@@ -213,33 +150,21 @@ export function BottomNavigation() {
 
         <Pressable
           accessibilityLabel="Search"
-          onPress={() => goToRoute('/search')}
+          onPress={() => navigate('/search')}
           onPressIn={() => {
-            searchButtonScale.value = withSpring(0.92, springConfig);
+            searchScale.value = withSpring(0.91, spring);
           }}
           onPressOut={() => {
-            searchButtonScale.value = withSpring(
-              pathname === '/search' ? 1.05 : 1,
-              springConfig,
-            );
-          }}
-        >
-          <Animated.View style={floatingSearchStyle}>
+            searchScale.value = withSpring(pathname === '/search' ? 1.06 : 1, spring);
+          }}>
+          <Animated.View style={searchStyle}>
             <GlassPanel
               interactive
-              intensity={84}
-              tintColor={GLASS_TINT}
+              intensity={86}
+              tintColor={navigationGlassTint}
               variant="pill"
-              style={[
-                styles.searchButton,
-                pathname === '/search' && styles.searchButtonActive,
-              ]}
-            >
-              <Ionicons
-                name="search"
-                size={23}
-                color={pathname === '/search' ? colors.green : colors.textSoft}
-              />
+              style={[styles.search, pathname === '/search' && styles.activeSearch]}>
+              <Ionicons color={pathname === '/search' ? colors.green : colors.textSoft} name="search" size={23} />
             </GlassPanel>
           </Animated.View>
         </Pressable>
@@ -249,7 +174,7 @@ export function BottomNavigation() {
 }
 
 const styles = StyleSheet.create({
-  floatingWrapper: {
+  wrapper: {
     position: 'absolute',
     left: layout.horizontalPadding,
     right: layout.horizontalPadding,
@@ -257,85 +182,64 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 100,
   },
-
-  dock: {
+  row: {
     width: '100%',
-    maxWidth: 400,
-    height: 90,
-    paddingHorizontal: 20,
-    paddingTop: 12,
+    maxWidth: 402,
+    height: 95,
+    paddingHorizontal: 25,
+    paddingTop: 16,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
+    gap: 16,
   },
-
-  tabRail: {
+  bar: {
     flex: 1,
-    height: 56,
-    padding: 3,
+    height: 62,
+    padding: 4,
     borderRadius: 999,
   },
-
-  railGlass: {
+  navigationGlass: {
+    backgroundColor: 'rgba(255, 255, 255, 0.025)',
+    borderColor: 'rgba(255, 255, 255, 0.14)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.13)',
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
-
-  tabList: {
+  tabs: {
     flex: 1,
     flexDirection: 'row',
   },
-
-  activeIndicator: {
+  selection: {
     position: 'absolute',
-    left: 3,
-    top: 3,
-    height: 48,
+    left: 4,
+    top: 4,
+    height: 54,
     paddingHorizontal: 1,
   },
-
-  indicatorGlass: {
+  selectionGlass: {
     flex: 1,
+    backgroundColor: 'rgba(18, 18, 18, 0.76)',
+    borderColor: 'rgba(255, 255, 255, 0.065)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.075)',
-    backgroundColor: 'rgba(15, 17, 17, 0.72)',
   },
-
-  navItem: {
+  tab: {
     flex: 1,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
+    gap: 2,
   },
-
-  navItemPressed: {
-    opacity: 0.72,
-    transform: [{ scale: 0.95 }],
-  },
-
-  navLabel: {
-    color: colors.textSoft,
-    fontSize: 10,
-    fontWeight: '600',
-  },
-
-  navLabelActive: {
-    color: colors.green,
-  },
-
-  searchButton: {
-    width: 56,
-    height: 56,
+  label: { color: colors.textSoft, fontSize: 10, fontWeight: '600' },
+  activeLabel: { color: colors.green },
+  search: {
+    width: 62,
+    height: 62,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.025)',
+    borderColor: 'rgba(255, 255, 255, 0.14)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.13)',
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
-
-  searchButtonActive: {
-    backgroundColor: 'rgba(15, 17, 17, 0.5)',
+  activeSearch: {
+    backgroundColor: 'rgba(18, 18, 18, 0.45)',
   },
+  pressed: { opacity: 0.7, transform: [{ scale: 0.94 }] },
 });

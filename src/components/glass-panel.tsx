@@ -1,17 +1,7 @@
 import { BlurView } from 'expo-blur';
-import {
-  GlassStyle,
-  GlassView,
-  isLiquidGlassAvailable,
-} from 'expo-glass-effect';
+import { GlassStyle, GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { PropsWithChildren } from 'react';
-import {
-  Platform,
-  StyleProp,
-  StyleSheet,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 type GlassPanelProps = PropsWithChildren<{
   style?: StyleProp<ViewStyle>;
@@ -25,19 +15,14 @@ type GlassPanelProps = PropsWithChildren<{
 export function GlassPanel({
   children,
   style,
-  intensity = 65,
+  intensity = 80,
   variant = 'card',
   interactive = false,
-  tintColor = 'rgba(255, 255, 255, 0.08)',
+  tintColor,
   glassStyle = 'regular',
 }: GlassPanelProps) {
-  const isPill = variant === 'pill';
-
-  const containerStyle = [
-    styles.surface,
-    isPill ? styles.pillShape : styles.cardShape,
-    style,
-  ];
+  const radiusStyle = variant === 'pill' ? styles.pill : styles.card;
+  const panelStyle = [styles.panel, radiusStyle, style];
 
   if (isLiquidGlassAvailable()) {
     return (
@@ -45,66 +30,43 @@ export function GlassPanel({
         colorScheme="dark"
         glassEffectStyle={glassStyle}
         isInteractive={interactive}
-        tintColor={tintColor}
-        style={containerStyle}
-      >
+        style={panelStyle}
+        tintColor={tintColor}>
         {children}
       </GlassView>
     );
   }
 
-  if (Platform.OS === 'ios') {
+  if (process.env.EXPO_OS === 'ios') {
     return (
-      <BlurView
-        intensity={intensity}
-        tint="dark"
-        style={[containerStyle, styles.iosGlass]}
-      >
+      <BlurView intensity={intensity} tint="systemMaterialDark" style={[panelStyle, styles.blurFallback]}>
         {children}
       </BlurView>
     );
   }
 
   return (
-    <View style={[containerStyle, styles.solidFallback]}>
+    <View style={[panelStyle, styles.androidFallback]}>
       {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  surface: {
+  panel: {
     overflow: 'hidden',
-
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 14,
-    },
-    shadowOpacity: 0.26,
-    shadowRadius: 28,
-
-    elevation: 10,
+    boxShadow: '0 16px 36px rgba(0, 0, 0, 0.28)',
   },
-
-  cardShape: {
-    borderRadius: 24,
-    borderCurve: 'continuous',
+  card: { borderRadius: 34, borderCurve: 'continuous' },
+  pill: { borderRadius: 999 },
+  blurFallback: {
+    borderColor: 'rgba(255, 255, 255, 0.24)',
+    borderWidth: 1,
+    backgroundColor: 'rgba(5, 8, 7, 0.38)',
   },
-
-  pillShape: {
-    borderRadius: 1000,
-  },
-
-  iosGlass: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.28)',
-    backgroundColor: 'rgba(10, 14, 13, 0.34)',
-  },
-
-  solidFallback: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255, 255, 255, 0.16)',
-    backgroundColor: 'rgba(18, 23, 22, 0.9)',
+  androidFallback: {
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    backgroundColor: 'rgba(25, 29, 28, 0.92)',
   },
 });
