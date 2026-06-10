@@ -29,9 +29,9 @@ const NAV_ITEMS: { label: string; icon: keyof typeof Ionicons.glyphMap; href: Hr
 ];
 
 const springConfig = {
-  damping: 21,
-  stiffness: 195,
-  mass: 0.8,
+  damping: 24,
+  stiffness: 180,
+  mass: 1.0,
 };
 
 const GLASS_TINT = 'rgba(220, 220, 220, 0.1)';
@@ -97,7 +97,7 @@ export function BottomNavigation() {
     width: itemWidth.value,
     transform: [
       { translateX: indicatorLeft.value },
-      { scale: indicatorScale.value },
+      { scale: 1 + 0 * indicatorScale.value },
     ],
   }));
 
@@ -260,19 +260,19 @@ const styles = StyleSheet.create({
 
   dock: {
     width: '100%',
-    maxWidth: 410,
-    height: 94,
-    paddingHorizontal: 22,
-    paddingTop: 15,
+    maxWidth: 400,
+    height: 90,
+    paddingHorizontal: 20,
+    paddingTop: 12,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 14,
+    gap: 12,
   },
 
   tabRail: {
     flex: 1,
-    height: 60,
-    padding: 4,
+    height: 56,
+    padding: 3,
     borderRadius: 999,
   },
 
@@ -289,9 +289,9 @@ const styles = StyleSheet.create({
 
   activeIndicator: {
     position: 'absolute',
-    left: 4,
-    top: 4,
-    height: 52,
+    left: 3,
+    top: 3,
+    height: 48,
     paddingHorizontal: 1,
   },
 
@@ -326,8 +326,8 @@ const styles = StyleSheet.create({
   },
 
   searchButton: {
-    width: 60,
-    height: 60,
+    width: 56,
+    height: 56,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,

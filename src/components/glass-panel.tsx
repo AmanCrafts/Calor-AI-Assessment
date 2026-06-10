@@ -25,7 +25,7 @@ type GlassPanelProps = PropsWithChildren<{
 export function GlassPanel({
   children,
   style,
-  intensity = 75,
+  intensity = 65,
   variant = 'card',
   interactive = false,
   tintColor = 'rgba(255, 255, 255, 0.08)',
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   },
 
   cardShape: {
-    borderRadius: 30,
+    borderRadius: 24,
     borderCurve: 'continuous',
   },
 
