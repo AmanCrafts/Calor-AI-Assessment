@@ -1,4 +1,4 @@
-import { FoodCard, FoodCardHandle } from '@/src/components/food-card.tsx';
+import { FoodCard, FoodCardHandle } from '@/src/components/food-card';
 import { IconButton } from '@/src/components/icon-button';
 import { ScreenBackground } from '@/src/components/screen-background';
 import { SwipeActionButton } from '@/src/components/swipe-action-button';
