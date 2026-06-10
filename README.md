@@ -257,10 +257,13 @@ The app is organized around Expo Router routes, reusable UI components, constant
 │   │   ├── app-header.tsx
 │   │   ├── bottom-navigation.tsx
 │   │   ├── food-card.tsx
+│   │   ├── food-card-face.tsx
 │   │   ├── glass-panel.tsx
 │   │   ├── icon-button.tsx
+│   │   ├── primary-button.tsx
 │   │   ├── profile-section.tsx
 │   │   ├── screen-background.tsx
+│   │   ├── stat.tsx
 │   │   ├── swipe-action-button.tsx
 │   │   └── swipe-progress.tsx
 │   ├── constants
@@ -269,6 +272,8 @@ The app is organized around Expo Router routes, reusable UI components, constant
 │   │   └── theme.ts
 │   ├── context
 │   │   └── taste-profile-context.tsx
+│   ├── hooks
+│   │   └── use-taste-analysis.ts
 │   └── types
 │       └── food.ts
 ├── app.json
@@ -293,10 +298,13 @@ Contains reusable UI and feature components.
 
 Important components include:
 
-* `food-card.tsx`: swipeable animated card with image, tags, decision badges, gesture handling, and imperative swipe support for button-triggered decisions.
+* `food-card.tsx`: swipeable animated card with gesture handling, and imperative swipe support for button-triggered decisions.
+* `food-card-face.tsx`: presentation logic for the food card UI containing image, tags, and decision badges.
 * `glass-panel.tsx`: shared glass container with iOS Liquid Glass, iOS blur, and Android fallback handling.
+* `primary-button.tsx`: shared primary action button.
 * `bottom-navigation.tsx`: shared glass-style bottom navigation.
 * `screen-background.tsx`: shared dark gradient screen wrapper.
+* `stat.tsx`: reusable component for displaying a single numerical statistic.
 * `swipe-progress.tsx`: progress indicator for the swipe deck.
 * `swipe-action-button.tsx`: action buttons for dislike, unsure, super-like, and like.
 * `profile-section.tsx`: reusable results section for grouped food choices.
@@ -315,6 +323,12 @@ Contains app-wide constants.
 Contains the taste profile state provider.
 
 The taste profile context keeps the app state simple and local. It stores the current choices, derives the current food from the deck index, records decisions, supports undo, and resets the session.
+
+### `src/hooks`
+
+Contains custom hooks to abstract complex logic.
+
+* `use-taste-analysis.ts`: Processes the local taste choices into segmented traits, likes, dislikes, and unsure categorizations for the results screen.
 
 ### `src/types`
 
@@ -571,10 +585,6 @@ Android cannot reproduce Apple Liquid Glass natively. The Android implementation
 
 The generated taste traits are based on selected food tags from liked and super-liked foods. This is intentionally simple, deterministic, and local. A real production app would likely use a richer preference model or backend recommendation system.
 
-### Original Figma Exports Kept as Reference
-
-The original extracted screens were treated as static visual references. They were not used directly as production screens because the exported files were long, hardcoded, and did not contain the required interaction logic.
-
 ---
 
 ## Verification Checklist
@@ -646,17 +656,14 @@ Tools used:
 
 * OpenAI Codex
 * ChatGPT
-* GitHub Copilot-style assistance
 
 How AI helped:
 
 * Interpreting the assignment requirements and turning them into a practical implementation checklist.
-* Refactoring the extracted Figma-oriented code into smaller native components.
+* Refactoring the code into smaller native components.
 * Planning a clean project structure around screens, components, constants, context, and types.
 * Implementing swipe interaction logic with Reanimated and Gesture Handler.
 * Drafting platform-specific glass fallback logic.
-* Reviewing README content against the submission requirements.
-* Improving wording around assumptions, trade-offs, and technical decisions.
 
 All generated suggestions were reviewed and adjusted manually. The final implementation decisions were made based on the assignment requirements, the provided Figma direction, Expo Go compatibility, and practical cross-platform React Native constraints.
 
@@ -677,22 +684,3 @@ Given more time, the app could be extended with:
 * More detailed loading states for remote images
 
 ---
-
-## Submission Notes
-
-This project is ready to be submitted with:
-
-* GitHub repository link
-* Walkthrough video link
-* Optional Expo build or preview link
-
-The walkthrough video should cover:
-
-1. Running the app in Expo Go or simulator.
-2. Intro screen and visual direction.
-3. Swipe gestures and button controls.
-4. Progress updates.
-5. Undo behavior.
-6. Results summary.
-7. Glass morphism and Android/iOS fallback strategy.
-8. Architecture and AI usage notes.
